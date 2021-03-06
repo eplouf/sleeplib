@@ -1,0 +1,15 @@
+sleeplib - Gère les réveils pour le Philips SmartSleep
+======================================================
+
+Ce module interroge le réveil (lui même placé en mode setup, donc wifi hotspot),
+et récupère les réveils sous un format facilement manipulable pour une appli flask
+que j'ai faite.
+La fonction pour activer les réveils ne marche pas sur mon périphérique, si ça
+marche chez vous ou que vous avez une idée n'hésitez-pas!
+
+Exemple d'usage:
+
+	>>> from sleeplib import Alarms
+	>>> alarm = Alarms()
+
+Ce code est sous licence BSD-3-Clause License.

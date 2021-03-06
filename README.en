@@ -1,0 +1,17 @@
+sleeplib - manage the alarm clocks of Philips SmartSleep
+========================================================
+
+This module ask the deivce (which is put in "setup" wifi hotspot),
+and retrieve the two first alarm clock, outputing these each in an interpreted
+json.
+
+The setAlarms() didn't work actually, when I try to update the settings,
+I either got {"error": "Timeout"} or {"error": "Out of memory"}.
+If you have any hints, please fill an issue!
+
+usage:
+
+	>>> from sleeplib import Alarms
+	>>> alarm = Alarms()
+
+This code is placed under BSD-3-Clause License.

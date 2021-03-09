@@ -1,7 +1,5 @@
 # hf3672 SmartSleep Philips library
 # to retrieve and set alarms
-# (actually just retrieve, because the device don't want my updates
-#  and it responds with {"error": "Timeout"} or {"error": "Out of memory"})
  
 import logging
 import requests
@@ -19,6 +17,7 @@ class Alarms(object):
         self.rs.mount("https://" + host, HTTPopts)
         self.producturi = "/di/v1/products/1/"
         self.url = "https://" + host + self.producturi
+        self.wualm = {"snztm": 9, "aenvs": {}, "aalms": {}, "prfsh": 0}
         self.aenvs = {'prfen': [bool() for i in range(16)],
                       'prfvs': [bool() for i in range(16)],
                       'pwrsv': [int() for i in range(16)]}
@@ -54,10 +53,9 @@ class Alarms(object):
         return req.json()
 
     def _put(self, urifunc, data):
-        headers = {'Content-Type': 'application/json'}
         urlfunc = self.url + urifunc
         try:
-            req = self.rs.put(urlfunc, data=data, headers=headers, timeout=30)
+            req = self.rs.put(urlfunc, json=data, timeout=10)
         except requests.ConnectionError:
             raise
         except requests.ConnectTimeout:
@@ -118,28 +116,24 @@ class Alarms(object):
 
     def setAlarms(self, alarms_struct):
         idx = 0
+        exit = 200
         for alarm in alarms_struct:
-            self.aenvs['prfen'][idx] = alarm['enabled']
-            self.aalms['ayear'][idx] = alarm['year']
-            self.aalms['amnth'][idx] = alarm['mnth']
-            self.aalms['alday'][idx] = alarm['lday']
-            self.aalms['daynm'][idx] = self._daysOred(alarm['daynm'])
-            self.aalms['almhr'][idx] = alarm['lmhr']
-            self.aalms['almmn'][idx] = alarm['lmmn']
             idx += 1
-        data1 = {"snztm": 9, "aenvs": self.aenvs, "aalms": self.aalms, "prfsh": 0}
-        data2 = {"snztm": 9, "aenvs": self.aenvs, "aalms": {}, "prfsh": 0}
-        data_str = json.dumps(data1)
-        data_str = data_str.replace(' ', '')
-        aalms = json.dumps(self.aalms).replace(' ', '')
-        aenvs = json.dumps(self.aenvs).replace(' ', '')
-        try:
-            #exit = self._put('wualm/aenvs', self.aenvs)
-            exit = self._put('wualm', data_str)
-            #exit = self._put('wualm/aalms', aalms_str)
-            #exit = self._put('wualm/aenvs', aenvs_str)
-        except:
-            raise
-        if exit != 200:
-            logging.info("setAlarms, put returned {}".format(exit))
+            prfwu = {}
+            prfwu['prfnr'] = idx
+            prfwu['prfen'] = alarm['enabled']
+            prfwu['ayear'] = alarm['year']
+            prfwu['amnth'] = alarm['mnth']
+            prfwu['alday'] = alarm['lday']
+            prfwu['daynm'] = self._daysOred(alarm['daynm'])
+            prfwu['almhr'] = alarm['lmhr']
+            prfwu['almmn'] = alarm['lmmn']
+            try:
+                iexit = self._put('wualm/prfwu', prfwu)
+                exit += iexit
+            except:
+                logging.exception("issue setting alarm #{}".format(idx))
+                raise
+        if exit % 200 != 0:
+            logging.error("setAlarms, last put returned {}".format(iexit))
         return exit
